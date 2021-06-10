@@ -1,0 +1,21 @@
+Source: listlinks
+Section: net
+Priority: extra
+Maintainer: nobody <nobody>
+Build-Depends: debhelper (>= 9.0.0)
+Standards-Version: 3.9.6
+
+Package: listlinks
+Architecture: all
+Depends: chromium-driver,
+         python3-selenium,
+         xvfb,
+         ${misc:Depends},
+         ${perl:Depends},
+         ${shlibs:Depends}
+Description: Hyperlinks einer Website auflisten
+ PhantomJS-Skript was alle Hyperlinks einer Website auflistet.
+ .
+ Dieses PhantomJS-Skript listet alle Hyperlinks einer Website auf. Wobei
+ JavaScript und Frames unterstützt werden (AJAX und Popups können noch
+ ein Problem sein).

@@ -1,0 +1,80 @@
+﻿Listlinks - Alle Hyperlinks einer Website auflistet
+
+Dieses PhantomJS listet alle Hyperlinks einer Website auf. Wobei
+JavaScript und Frames unterstützt werden (AJAX und Popups können noch
+ein Problem sein).
+
+ * PhantomJS: listlinks.js (Wird aktuell installiert)
+
+Weitere Lösungen mit Selenium
+
+ * Perl: selenium-listlinks.pl (Funktioniert noch fehlerhaft)
+ * Python: selenium-listlinks.py (Funktioniert schon zufriedenstellend)
+
+Die Skripts nutzen z.Z. Firefox, aber Chromium sollte auch funktionieren
+(entsprechenden Code aktivieren).
+
+Installation
+
+To install into your home directory run:
+
+	git clone https://github.com/1nn3/listlinks listlinks
+	cd listlinks
+	make prefix=$HOME/.local install
+
+Make sure bindir is in PATH!
+
+To de-install run:
+
+	make prefix=$HOME/.local uninstall
+
+To build a Debian package run:
+
+	debuild
+
+listlinks-notify
+
+Das Skript listlinks-notify zeigt neue Hyperlinks einer Website an.
+
+Konkret kann man sich zum Beispiel über Gratisaktionen von Steam
+informieren lassen (Free Weekend/Free For a Limited Time).
+
+Dazu erstellt man einen Cronjob:
+	@hourly listlinks-notify -f 'tolower($2) ~ /free/ {print $2}' -u 'https://store.steampowered.com/news/?headlines=1'
+
+So bekommt man alle neuen Gratisaktionen via Mail mitgeteilt.
+
+Oder sich über die Anzahl täglicher mass shootings in den USA informieren:
+
+	@daily listlinks-notify -f '$2 ~ /View Source/ {print $1}' -u 'https://www.gunviolencearchive.org/last-72-hours' | wc -l
+
+Oder alle neuen Dokus auf dokumonster.de anzeigen:
+
+	listlinks-notify -f '$1 ~ /^http:\/\/dokumonster\.de\/sehen\// {printf("\%s\t\%s\n", $2, $1)}' -u 'http://dokumonster.de' | nl
+
+Umgebungsvariablen
+
+Das Skript listlinks wertet folgende Umgebungsvariablen aus:
+
+	LISTLINKS_JAVASCRIPT_ENABLED
+
+	LISTLINKS_RESOURCE_TIMEOUT
+
+	LISTLINKS_USER_AGENT
+
+Häufig gestellte Fragen (FAQ)
+
+Was tun beim Fehler E: Fail to load URL: https://example.com?
+Mit gesetztem Schalter --debug=true erhält man Details zum Fehler:
+
+	phantomjs --debug=true listlinks.js https://example.com
+
+Was tun beim Fehler QStandardPaths: XDG_RUNTIME_DIR not set,
+defaulting to '/tmp/runtime-somebody?  Verzeichnis erstellen und die
+Umgebungsvariable setzen:
+
+	# https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+	export USER="${USER:-$LOGNAME}"
+	export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/tmp/runtime-$USER}"
+	mkdir -m "0700" -p "$XDG_RUNTIME_DIR"
+
