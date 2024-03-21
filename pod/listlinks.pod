@@ -1,0 +1,44 @@
+=pod
+
+=encoding utf8
+
+=head1 NAME
+
+listlinks - List hyperlinks of an URI
+
+=head1 SYNOPSIS
+
+B<listlinks> <URI…>
+
+Liest URIs auch Zeilenweise von STDIN
+
+B<listlinks> < path/to/file.txt
+
+=head1 DESCRIPTION
+
+List all hyperlinks of an URI. With JavaScript and Frames support.
+
+=head1 OPTIONS
+
+=over
+
+=item --version
+
+=item --help
+
+=item --with-text
+
+Print text e.g. the inner text of the HTML tag.
+
+=back
+
+=head1 FILES
+
+=over
+
+=back
+
+=head1 SEE ALSO
+
+=cut
+
