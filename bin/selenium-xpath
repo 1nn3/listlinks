@@ -1,0 +1,89 @@
+#!/usr/bin/env perl
+
+use v5.36;
+
+use locale;
+use strict;
+use utf8;
+use warnings;
+
+use App::SeleniumScripts;
+
+our $proxy;
+our $config = $App::SeleniumScripts::config;
+our $stay   = 3;
+our $xpath  = "*";
+GetOptions(
+    "proxy=s" => \$proxy,
+    "stay=i"  => \$stay,
+    "xpath=s" => \$xpath,
+) || die("Error in command line arguments: $!");
+
+our $profile = Selenium::Firefox::Profile->new(
+    profile_dir => $$config{_}{profile_dir}, );
+
+my %params = ( extra_capabilities =>
+        { 'moz:firefoxOptions' => { args => ["--headless"], }, }, );
+
+if ( $$config{_}{binary} ) {
+    $params{binary} = $$config{_}{binary};
+}
+
+if ( $$config{_}{firefox_binary} ) {
+    $params{firefox_binary} = $$config{_}{firefox_binary};
+}
+
+if ( $$config{_}{firefox_profile} ) {
+    $params{firefox_profile} = $$config{_}{firefox_profile};
+}
+
+our $driver;
+our $uri;
+
+sub xpath {
+
+    if ( !@ARGV ) {
+        @ARGV = <STDIN>;
+    }
+    if ( !@ARGV ) {
+        die "No URIs are given!";
+    }
+    chomp(@ARGV);
+
+    for my $uri (<>) {
+        eval {
+            $driver->get($uri);
+            App::SeleniumScripts::close_popup_windows($driver);
+            App::SeleniumScripts::wait_for_page_to_load($driver);
+            sleep($stay);
+            for ( $driver->find_elements($xpath) ) {
+                say $_->get_text || "";
+            }
+        };
+        $@ && warn "$uri: $@";
+    }
+}
+
+if ($proxy || $$config{_}{proxy} || $$config{xpath}{proxy}) {
+    say STDERR "Using proxy";
+
+    $params{proxy} = {
+        proxyType => "manual",
+        sslProxy  => $proxy || $$config{_}{proxy} || $$config{xpath}{proxy},
+    };
+
+    $driver = Selenium::Firefox->new( %params, );
+}
+else {
+    $driver = Selenium::Firefox->new( %params, );
+}
+
+xpath();
+
+END {
+    App::SeleniumScripts::close_popup_windows($driver);
+
+    $driver->quit();
+    $driver->shutdown_binary();
+}
+

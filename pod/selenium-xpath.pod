@@ -1,0 +1,44 @@
+=pod
+
+=encoding utf8
+
+=head1 NAME
+
+selenium-xpath - Get a XPath of an URI
+
+=head1 SYNOPSIS
+
+B<selenium-xpath> --xpath "*" <URI…>
+
+Liest URIs auch Zeilenweise von STDIN
+
+B<selenium-xpath> --xpath "*" < path/to/file.txt
+
+=head1 DESCRIPTION
+
+Get a XPath of an URI.
+
+=head1 OPTIONS
+
+=over
+
+=item --version
+
+=item --help
+
+=item --xpath
+
+The XPath to print. Defaults to "*".
+
+=back
+
+=head1 FILES
+
+=over
+
+=back
+
+=head1 SEE ALSO
+
+=cut
+
