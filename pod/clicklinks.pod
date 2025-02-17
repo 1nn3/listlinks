@@ -1,0 +1,42 @@
+=pod
+
+=encoding utf8
+
+=head1 NAME
+
+clicklinks - Click URIs
+
+=head1 SYNOPSIS
+
+B<clicklinks> <URI…>
+
+Liest URIs auch Zeilenweise von STDIN
+
+B<clicklinks> < path/to/file.txt
+
+=head1 DESCRIPTION
+
+Click URIs.
+
+With tabbed browsing support.
+
+=head1 OPTIONS
+
+=over
+
+=item --version
+
+=item --help
+
+=back
+
+=head1 FILES
+
+=over
+
+=back
+
+=head1 SEE ALSO
+
+=cut
+
