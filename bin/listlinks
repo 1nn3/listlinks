@@ -1,0 +1,137 @@
+#!/usr/bin/env perl
+
+use v5.36;
+
+use locale;
+use strict;
+use utf8;
+use warnings;
+
+use App::SeleniumScripts;
+
+our $proxy;
+our $config                    = $App::SeleniumScripts::config;
+our $frame_recursion_max_depth = 10;
+our $stay                      = 3;
+our $with_text;
+GetOptions(
+    "proxy=s"                     => \$proxy,
+    "frame-recursion-max-depth=i" => \$frame_recursion_max_depth,
+    "stay=i"                      => \$stay,
+    "with-text"                   => \$with_text,
+) || die("Error in command line arguments: $!");
+
+our $profile = Selenium::Firefox::Profile->new(
+    profile_dir => $$config{_}{profile_dir}, );
+
+my %params = ( extra_capabilities =>
+        { 'moz:firefoxOptions' => { args => ["--headless"], }, }, );
+
+if ( $$config{_}{binary} ) {
+    $params{binary} = $$config{_}{binary};
+}
+
+if ( $$config{_}{firefox_binary} ) {
+    $params{firefox_binary} = $$config{_}{firefox_binary};
+}
+
+if ( $$config{_}{firefox_profile} ) {
+    $params{firefox_profile} = $$config{_}{firefox_profile};
+}
+
+our $driver;
+our $uri;
+
+sub list_links {
+    for ( $driver->find_elements("//a") ) {
+        my $href = $_->get_attribute("href") || "";
+        $href = URI->new($href)->abs( URI->new($uri) )->as_string || $href;
+        my $text = $_->get_text || "";
+        $text =~ s/\s+/ /g;
+        if ($with_text) {
+            say $href, "\t", $text;
+        }
+        else {
+            say $href;
+        }
+    }
+}
+
+sub get_frames {
+    my (@parrents) = @_;
+    my @elements   = $driver->find_elements("//iframe");
+    my @frames     = ();
+
+    #for ( my $i = 0 ; $i < scalar(@elements) ; $i++ ) {
+    #    push( @frames, [ @parrents, $i ] );    # frame position
+    #}
+    for (@elements) {
+        push( @frames, [ @parrents, $_ ] );    # frame element
+    }
+    return @frames;
+}
+
+sub walk_through_frames {
+    my (@frames) = @_;
+    for (@frames) {
+        if ( scalar( @{$_} ) > $frame_recursion_max_depth ) {
+            warn "$uri: frame recursion max depth reached";
+            next;
+        }
+
+        $driver->switch_to_frame(undef);    # main frame
+        for ( @{$_} ) {
+            $driver->switch_to_frame($_);
+        }
+
+        list_links;
+        walk_through_frames( get_frames( @{$_} ) );    # subframes
+    }
+}
+
+sub list {
+
+    if ( !@ARGV ) {
+        @ARGV = <STDIN>;
+    }
+    if ( !@ARGV ) {
+        die "No URIs are given!";
+    }
+    chomp(@ARGV);
+
+    for $uri (@ARGV) {
+        eval {
+            $driver->get($uri);
+            App::SeleniumScripts::close_popup_windows($driver);
+            App::SeleniumScripts::wait_for_page_to_load($driver);
+            sleep($stay);
+            list_links;
+            walk_through_frames( get_frames( () ) );
+        };
+        $@ && warn "$uri: $@";
+    }
+}
+
+if ($proxy || $$config{_}{proxy} || $$config{listlinks}{proxy}) {
+    say STDERR "Using proxy";
+
+    $params{proxy} = {
+        proxyType => "manual",
+        sslProxy  => $proxy || $$config{_}{proxy} || $$config{listlinks}{proxy},
+    };
+
+    $driver = Selenium::Firefox->new( %params, );
+}
+else {
+    $driver = Selenium::Firefox->new( %params, );
+}
+
+list();
+
+END {
+    App::SeleniumScripts::close_popup_windows($driver);
+
+    $driver->quit();
+    $driver->shutdown_binary;
+}
+

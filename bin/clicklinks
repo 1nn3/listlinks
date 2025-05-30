@@ -1,0 +1,99 @@
+#!/usr/bin/env perl
+
+use v5.36;
+
+use locale;
+use strict;
+use utf8;
+use warnings;
+
+use App::SeleniumScripts;
+
+our $proxy;
+our $config = $App::SeleniumScripts::config;
+our $stay   = 3;
+our $tabs   = 8;
+GetOptions(
+    "proxy=s" => \$proxy,
+    "stay=i"  => \$stay,
+    "tabs=i"  => \$tabs,
+) || die("Error in command line arguments: $!");
+
+our $profile = Selenium::Firefox::Profile->new(
+    profile_dir => $$config{_}{profile_dir}, );
+
+# http://kb.mozillazine.org/Browser.link.open_newwindow
+$profile->set_preference( 'browser.link.open_newwindow' => 3, );
+
+my %params = ( extra_capabilities =>
+        { 'moz:firefoxOptions' => { args => ["--headless"], }, }, );
+
+if ( $$config{_}{binary} ) {
+    $params{binary} = $$config{_}{binary};
+}
+
+if ( $$config{_}{firefox_binary} ) {
+    $params{firefox_binary} = $$config{_}{firefox_binary};
+}
+
+if ( $$config{_}{firefox_profile} ) {
+    $params{firefox_profile} = $$config{_}{firefox_profile};
+}
+
+our $driver;
+our $uri;
+
+sub click {
+
+    if ( !@ARGV ) {
+        @ARGV = <STDIN>;
+    }
+    if ( !@ARGV ) {
+        die "No URIs are given!";
+    }
+    chomp(@ARGV);
+
+    while ( my @uris = splice( @ARGV, 0, $tabs ) ) {
+        eval {
+            Selenium::Waiter::wait_until {
+                $driver->execute_script( "
+// Das JavaScript wird auf der Seite ausgeführt, daher hierfür eine leere
+var tabs = [];
+for (var i = 0; i < arguments.length; i++) {
+	//alert(arguments[i]);
+	console.log(arguments[i]);
+	tabs.push(window.open(arguments[i]));
+}
+return tabs.length;
+", @uris ) > -1
+            };
+            sleep $stay;
+            App::SeleniumScripts::close_popup_windows($driver);
+        };
+        $@ && warn "@uris: $@";
+    }
+}
+
+if ($proxy || $$config{_}{proxy} || $$config{clicklinks}{proxy}) {
+    say STDERR "Using proxy";
+
+    $params{proxy} = {
+        proxyType => "manual",
+        sslProxy  => $proxy || $$config{_}{proxy} || $$config{clicklinks}{proxy},
+    };
+
+    $driver = Selenium::Firefox->new( %params, );
+}
+else {
+    $driver = Selenium::Firefox->new( %params, );
+}
+
+click();
+
+END {
+    App::SeleniumScripts::close_popup_windows($driver);
+
+    $driver->quit();
+    $driver->shutdown_binary();
+}
+

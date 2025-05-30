@@ -1,0 +1,28 @@
+App::SeleniumScripts
+
+Installation
+
+To install into your home directory run:
+
+git clone https://github.com/user/selenium-scripts
+cpan ./selenium-scripts
+
+To build a Debian package run:
+
+debuild
+
+listlinks - Alle Hyperlinks einer Website auflistet
+
+Listet alle Hyperlinks einer Website auf. Wobei JavaScript und Frames
+unterstützt werden (AJAX und Popups können noch ein Problem sein).
+
+* Perl: bin/listlinks.pl (Wird aktuell installiert)
+* PhantomJS: examples/listlinks.js
+* Python: examples/listlinks.py
+
+Z.Z. wird Firefox genutzt, aber Chromium sollte auch funktionieren.
+
+Modul als tar packen:
+
+tar -czf selenium-scripts.tar.gz selenium-scripts
+

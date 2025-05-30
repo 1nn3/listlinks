@@ -1,0 +1,218 @@
+<h1>Selenium: Automatisierung von Webanwendungen</h1>
+
+<p>Einstieg in die Automatisierung von Webanwendungen mit Selenium, Perl und Firefox</p>
+
+<p>Selenium ist ein Framework zur Automatisierung von Webanwendungen im Browser (hier Firefox). Es können damit viele Website- und Blog-Engines automatisiert werden. Für den Einstieg, folgen unten konkrete Beispiele.</p>
+
+<p>Der primäre Einsatzzweck von Selenium ist die Automatisierung von Web-Anwendungen zu Testzwecken. Es kann vor allem Entwicklern von Webanwendungen sehr viel Tipparbeit abnehmen – beispielsweise beim Ausfüllen von Webformularen – und macht das Testen von Webanwendungen dadurch schneller, flexibler und verlässlicher.
+Aber Selenium ist nicht nur auf Tests beschränkt, auch webbasierte Administrationsaufgaben können (und sollten) damit automatisiert werden.</p>
+
+<p>Selenium automatisiert Web-Browser. Das ist es! Was du mit dieser Kraft machst, liegt ganz bei dir.</p>
+
+<h2>Selenium WebDriver installieren</h2>
+
+<p>Selenium WebDriver ist der Nachfolger von Selenium Remote Control. Es akzeptiert Befehle (als Selenese-Kommandos oder über das Client-API) und leitet sie an den Browser weiter.
+Eine Anbindung für Perl an das Client-API, ist mit dem CPAN-Modul <em><a href="http://search.cpan.org/dist/Selenium-Remote-Driver/">Selenium::Remote::Driver</a></em> verfügbar.</p>
+
+<p>Unter Debian ist das Modul (noch) nicht vorhanden und es muss von CPAN installiert werden:</p>
+
+<pre><code>cpan -T -f -i Selenium::Remote::Driver
+</code></pre>
+
+<p>Wer möchte kann sich auch ein Debianpaket aus dem Modul bauen und mit der Paketverwaltung installieren (Dazu muss das Paket <em>pkg-perl-tools</em> installiert sein).</p>
+
+<pre><code>env DEB_BUILD_OPTIONS="nocheck" cpan2deb Selenium::Remote::Driver
+</code></pre>
+
+<h3>Firefox statt Selenium Standalone-Server verwernden</h3>
+
+<p>Um statt des Selenium Standalone-Server den Browser Firefox nutzen zu können, muss der Proxy <em>geckodriver</em> installiert werden. Dieser stellt die vom WebDriver-Protokoll beschriebene HTTP-API für die Kommunikation mit Gecko-Browsern wie Firefox bereit. Den Download finden man unter: <a href="https://github.com/mozilla/geckodriver/releases/">https://github.com/mozilla/geckodriver/releases/</a>.</p>
+
+<p>Zur Installation lade das Release für deine Plattform herunter, entpacken es nach <em>/usr/local/bin/</em> und machen es ausführbar.
+Dies ist für die folgenden Beispiele notwendig!</p>
+
+<h2>Ein Beispiel</h2>
+
+<p>Ist der entsprechenden Treiber installiert, können Sie das Modul <em>Selenium::Remote::Driver</em> direkt verwenden, um Selenium WebDriver zu starten. Diese Methode erfordert weder die Installation des JRE/JDK noch den Selenium Standalone-Server. Es muss nur die entsprechende Klasse für die Treiberkonstruktion verwenden werden.</p>
+
+<pre><code>use Data::Dumper;
+use Selenium::Firefox;
+my $driver = Selenium::Firefox-&gt;new(
+    binary =&gt; '/home/user/Downloads/geckodriver-v0.30.0-linux64/geckodriver'
+);
+$driver-&gt;get('http://www.google.com');
+print Dumper($driver-&gt;get_title);
+my $query = $driver-&gt;find_element('q', 'name');
+$query-&gt;send_keys('CPAN Selenium Remote Driver');
+my $send_search = $driver-&gt;find_element('btnG', 'name');
+$send_search-&gt;click;
+# make the find_element blocking for a second
+# to allow the title to change
+$driver-&gt;set_implicit_wait_timeout(2000);
+my $results = $driver-&gt;find_element('search', 'id');
+print Dumper($driver-&gt;get_title);
+END {
+    $driver-&gt;quit;
+}
+</code></pre>
+
+<p>Welche Funktionen das Modul bietet, zeigt die (englischsprachige) Dokumentation: <a href="http://search.cpan.org/dist/Selenium-Remote-Driver/">http://search.cpan.org/dist/Selenium-Remote-Driver/</a>.</p>
+
+<h3>Verwendete Funktionen</h3>
+
+<p>Welche Funktionen das Modul bietet, zeigt die (englischsprachige) Dokumentation: <a href="http://search.cpan.org/dist/Selenium-Remote-Driver">http://search.cpan.org/dist/Selenium-Remote-Driver/</a></p>
+
+<h4><code>$driver-&gt;get</code></h4>
+
+<p>Navigiert zu einer bestimmten URL.</p>
+
+<p>Usage: <code>$driver-&gt;get('http://www.example.net');</code></p>
+
+<h4><code>$driver-&gt;find_element</code></h4>
+
+<p>Sucht nach einem Element (XML/HTML) auf der Seite, ausgehend vom Wurzelelement im DOM-Baum.</p>
+
+<p>Das Element wird als Objekt der Klasse <em><a href="http://search.cpan.org/dist/Selenium-Remote-Driver/lib/Selenium/Remote/WebElement.pm">WebElement</a></em> zurückgegeben.</p>
+
+<p>Die Funktion erwartet zwei Argumente:</p>
+
+<ul>
+<li>Das Suchziel: Den Bezeichner unter dem das Element im Dokument gefunden werden kann.</li>
+<li>Schema: Dieses Argument ist optional und hat den Standardwert <code>xpath</code>. Es kann eines der folgenden sein: <code>class</code>, <code>class_name</code>, <code>css</code>, <code>id</code>, <code>link</code>, <code>link_text</code>, <code>partial_link_text</code>, <code>tag_name</code>, <code>name</code> oder <code>xpath</code>.</li>
+</ul>
+
+<p>Usage: <code>$driver-&gt;find_element("//input[@name='q']");</code>, <code>$driver-&gt;find_element("eindeutige Kennung", "id");</code></p>
+
+<p>Wird kein Element gefunden, bricht das Skript mit einer Fehlermeldung ab. Soll stattdessen nur eine Warnung ausgegeben werden, muss eine der folgenden Funktionen benutzt werden:</p>
+
+<ul>
+<li><code>find_element_by_class</code></li>
+<li><code>find_element_by_class_name</code></li>
+<li><code>find_element_by_css</code></li>
+<li><code>find_element_by_id</code></li>
+<li><code>find_element_by_link</code></li>
+<li><code>find_element_by_link_text</code></li>
+<li><code>find_element_by_name</code></li>
+<li><code>find_element_by_partial_link_text</code></li>
+<li><code>find_element_by_tag_name</code></li>
+<li><code>find_element_by_xpath</code></li>
+</ul>
+
+<p>Daneben gibt es noch die Funktion <code>$driver-&gt;find_child_element</code>.
+Diese sucht nach einem Element beginnend, ab einem anderen Element als Startpunkt im DOM-Baum.</p>
+
+<p>Die Funktion erwartet zwei Argumente:</p>
+
+<ul>
+<li>WebElement-Objekt: Startpunkt der Suche im DOM-Baum.</li>
+<li>Das Suchziel: Bezeichner unter dem das Element gefunden werden kann.</li>
+</ul>
+
+<p>In einer XPath-Angabe darf keine absolute Angabe verwendet werden (<code>/</code>), um nach Kind-Elementen zu suchen. Verwenden Sie stattdessen die relative Angabe <code>.</code>.</p>
+
+<p>Usage:</p>
+
+<pre><code>my $start_element = $driver-&gt;find_element("//select[@name='ned']");
+# note the usage of ./ when searching for a child element instead of //
+my $child = $driver-&gt;find_child_element($start_element, "./option[@value='es_ar']");
+</code></pre>
+
+<p>Statt nur nach einem Element (dem ersten) zu suchen, kann auch nach allen Elementen, die auf das Suchmuster passen, gesucht werden. Dazu bietet das Modul die folgenden zwei Funktionen:</p>
+
+<ul>
+<li><code>find_elements</code></li>
+<li><code>find_child_elements</code></li>
+</ul>
+
+<p>Diese funktionieren analog zu den oben genannten Funktionen, geben aber eine Liste der gefundenen Elemente zurück.</p>
+
+<h4><code>$element-&gt;send_keys</code></h4>
+
+<p>Sendet eine Sequenz von Tastendrücken an das Element.</p>
+
+<p>Usage: <code>$element-&gt;send_keys('A', 'B', 'C', "Text");</code>, <code>$element-&gt;send_keys($scalar);</code></p>
+
+<p>Um spezielle Tastatur-Ereignisse zu senden, muss das Modul <em>WDKeys</em> benutzt werden:</p>
+
+<pre><code>use Selenium::Remote::WDKeys; # include the WDKeys module
+$element-&gt;send_keys(KEYS-&gt;{'space'}, KEYS-&gt;{'enter'});
+</code></pre>
+
+<p>Alle verfügbaren Tastatur-Ereignisse sind hier definiert: <a href="https://github.com/teodesian/Selenium-Remote-Driver/blob/master/lib/Selenium/Remote/WDKeys.pm#L17">https://github.com/teodesian/Selenium-Remote-Driver/blob/master/lib/Selenium/Remote/WDKeys.pm#L17</a>.</p>
+
+<h4><code>$element-&gt;click</code></h4>
+
+<p>Klickt auf das Element.</p>
+
+<p>Usage: <code>$element-&gt;click();</code></p>
+
+<h4><code>$element-&gt;get_attribute</code></h4>
+
+<p>Gibt den Wert eines Attributs zurück.</p>
+
+<p>Die Funktion erwartet als Argument, den Namen des Attributs.</p>
+
+<p>Usage: <code>$element-&gt;get_attribute('name');</code></p>
+
+<h4><code>$element-&gt;get_text</code></h4>
+
+<p>Gibt den Wert von innerText/textContent zurück.</p>
+
+<p>Usage: <code>$element-&gt;get_text;</code></p>
+
+<h2>XML Path Language (XPath)</h2>
+
+<p>XPath wird verwendet, um durch die Elemente und Attribute - dem sog. Document Object Model (DOM) - eines XML-Dokument zu navigieren. Es ist ein Teil des W3C XSLT-Standards.</p>
+
+<p>Siehe auch:</p>
+
+<ul>
+<li><a href="http://www.w3schools.com/xsl/default.asp">http://www.w3schools.com/xsl/default.asp</a></li>
+<li><a href="https://de.wikipedia.org/wiki/XPath">https://de.wikipedia.org/wiki/XPath</a></li>
+<li><a href="http://www.w3.org/TR/xpath/">http://www.w3.org/TR/xpath/</a></li>
+</ul>
+
+<p>Zum untersuchen des DOM und erstellen von XPath-Angaben, eigenen sich die Firefox Erweiterungen/das Add-ons <em><a href="Web Developer">https://addons.mozilla.org/de/firefox/addon/web-developer/</a></em>. Es vereinen vieles aus <em><a href="FireXPath">https://addons.mozilla.org/firefox/addon/firepath/</a></em> und <em><a href="Firebug">https://addons.mozilla.org/de/firefox/addon/firebug/</a></em>.</p>
+
+<p>Dort dann unter dem Punk Element untersuchen des Kontext-Menüs.</p>
+
+<h2>Formulardetails anzeigen lassen</h2>
+
+<p>Um die Bezeichner von Formularfeldern herauszufinden, eignet sich ebenfalls das Firefox Add-on <em>Web Developer</em> dort der Punkt <em>Forms</em> im Kontext-Menü.</p>
+
+<p><img src="selenium-form.png" alt="selenium-form.png" title="" /></p>
+
+<h2>XPath Kopieren</h2>
+
+<p>Um XPath von Elementen im DOM herauszufinden, eignet sich ebenfalls das Firefox Add-on <em>Webdeveloper</em> dort der Punkt Kopieren XPath im Kontext-Menü.</p>
+
+<p><img src="selenium-xpath.png" alt="selenium-xpath.png" title="" /></p>
+
+<h2>Cookies speichern und wieder setzen</h2>
+
+<pre><code>use Storable;
+my $cookies_path = "./cookies.text";
+# Cookies öffnen
+my $cookies = ( -r $cookies_path ) ? Storable::retrieve($cookies_path) : [];
+for ( @{$cookies} ) {
+    eval {
+        $_-&gt;{secure}   = 0;    # overwrite
+        $_-&gt;{httponly} = 0;    # overwrite
+        $driver-&gt;add_cookie(
+            $_-&gt;{name},   $_-&gt;{value},  $_-&gt;{path},
+            $_-&gt;{domain}, $_-&gt;{secure}, $_-&gt;{httponly}
+        );
+    };
+    @_ &amp;&amp; warn @_;
+}
+# Cookies speichern
+Storable::store( $driver-&gt;get_all_cookies, $cookies_path );
+</code></pre>
+
+<h2>Weblinks</h2>
+
+<ul>
+<li><a href="https://github.com/SeleniumHQ/selenium/wiki/FirefoxDriver">https://github.com/SeleniumHQ/selenium/wiki/FirefoxDriver</a></li>
+<li><a href="https://github.com/mozilla/geckodriver/releases">https://github.com/mozilla/geckodriver/releases</a></li>
+<li><a href="https://github.com/teodesian/Selenium-Remote-Driver">https://github.com/teodesian/Selenium-Remote-Driver</a></li>
+</ul>
